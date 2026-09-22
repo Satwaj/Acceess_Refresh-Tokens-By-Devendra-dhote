@@ -1,5 +1,4 @@
-
-import { useAuth } from "../../../hooks/useAuth"
+import { useAuth } from "../../../hooks/useAuth";
 
 const Register = () => {
   let {
@@ -89,7 +88,7 @@ const Register = () => {
         <p className="text-center text-gray-500 mt-6">
           Already have an account?{" "}
           <span
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/login")}
             className="text-black font-semibold cursor-pointer"
           >
             Login

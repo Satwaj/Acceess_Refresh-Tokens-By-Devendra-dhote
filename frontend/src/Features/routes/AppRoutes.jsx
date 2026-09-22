@@ -1,42 +1,44 @@
-import { createBrowserRouter, RouterProvider } from "react-router"
-import AuthLayout from "../layouts/AuthLayout"
-import MainLayout from "../layouts/MainLayout"
-import Login from "../Auth/components/Pages/Login"
-import Register from "../Auth/components/Pages/Register"
-import Home from "../components/Pages/Home"
-import Public from "./protected/Public"
-import Protected from "./protected/Protected"
-import { useEffect } from "react"
-import { useDispatch } from "react-redux"
-import { addUser, removeUser, setLoading } from "../state/auth.slice"
-import { getMe } from "../services/auth.service"
-
+import {
+  createBrowserRouter,
+  Navigate,
+  RouterProvider,
+} from "react-router-dom";
+import AuthLayout from "../layouts/AuthLayout";
+import MainLayout from "../layouts/MainLayout";
+import Login from "../Auth/components/Pages/Login";
+import Register from "../Auth/components/Pages/Register";
+import Home from "../components/Pages/Home";
+import Public from "./protected/Public";
+import Protected from "./protected/Protected";
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { addUser, removeUser, setLoading } from "../state/auth.slice";
+import { getMe } from "../services/auth.service";
 
 const AppRoutes = () => {
+  const dispatch = useDispatch();
 
-  const dispatch = useDispatch()
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        dispatch(setLoading());
 
-useEffect(() => {
-  const checkUser = async () => {
-    try {
-      dispatch(setLoading());
+        const user = await getMe();
+        console.log("User data fetched successfully:", user);
+        dispatch(addUser(user));
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        dispatch(removeUser());
+      }
+    };
 
-      const user = await getMe();
-      console.log("User data fetched successfully:", user);
-      dispatch(addUser(user));
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      dispatch(removeUser());
-    }
-  };
-
-  checkUser();
-}, []);
+    checkUser();
+  }, [dispatch]);
 
   let router = createBrowserRouter([
     {
       path: "/",
-      element: <Public />,   //user aaya to /home pe redirect karna hai
+      element: <Public />, //user aaya to /home pe redirect karna hai
       children: [
         {
           path: "",
@@ -44,6 +46,10 @@ useEffect(() => {
           children: [
             {
               path: "",
+              element: <Navigate to="/login" replace />,
+            },
+            {
+              path: "login",
               element: <Login />,
             },
             {
@@ -56,7 +62,7 @@ useEffect(() => {
     },
     {
       path: "/home",
-      element: <Protected />,   //user nahi aaya to / pe redirect karna hai
+      element: <Protected />, //user nahi aaya to / pe redirect karna hai
       children: [
         {
           path: "",
@@ -71,7 +77,7 @@ useEffect(() => {
       ],
     },
   ]);
-  return  <RouterProvider router={router} />
-}
+  return <RouterProvider router={router} />;
+};
 
-export default AppRoutes
+export default AppRoutes;

@@ -1,5 +1,4 @@
-import {useAuth} from "../../../hooks/useAuth"
-
+import { useAuth } from "../../../hooks/useAuth";
 
 const Login = () => {
   let {
@@ -17,7 +16,10 @@ const Login = () => {
 
         <p className="text-gray-500 text-center mb-6">Login to your account</p>
 
-        <form onSubmit={handleSubmit(handleLogin)} className="flex flex-col gap-5">
+        <form
+          onSubmit={handleSubmit(handleLogin)}
+          className="flex flex-col gap-5"
+        >
           {/* Email */}
           <div>
             <input
@@ -70,7 +72,7 @@ const Login = () => {
         <p className="text-center text-gray-500 mt-6">
           Don&apos;t have an account?{" "}
           <span
-            onClick={() => navigate("register")}
+            onClick={() => navigate("/register")}
             className="text-black font-semibold cursor-pointer"
           >
             Register

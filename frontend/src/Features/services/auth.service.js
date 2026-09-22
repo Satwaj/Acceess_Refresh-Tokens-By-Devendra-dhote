@@ -23,26 +23,27 @@ export let axiosInstance = axios.create({
 //     }
 //   }
 // );
-
 axiosInstance.interceptors.response.use(
   (response) => response,
 
   async (error) => {
     const originalRequest = error.config;
+    const authPaths = ["/login", "/register", "/me", "/getAccessToken"];
+    const isAuthRequest = authPaths.includes(originalRequest?.url);
 
     if (
       error.response?.status === 401 &&
+      originalRequest &&
       !originalRequest.retry &&
-      originalRequest.url !== "/api/auth/me"
+      !isAuthRequest
     ) {
       originalRequest.retry = true;
 
       try {
-        await axiosInstance.get("/get-accessToken");
+        await axiosInstance.get("/getAccessToken");
 
         return axiosInstance(originalRequest);
       } catch (refreshError) {
-        window.location.href = "/";
         return Promise.reject(refreshError);
       }
     }
@@ -51,36 +52,27 @@ axiosInstance.interceptors.response.use(
   },
 );
 
+export async function register({ email, password, name }) {
+  const res = await axiosInstance.post("/register", {
+    email,
+    password,
+    name,
+  });
 
- export async function register({
-   email,
-   password,
-   name,
- })
+  return res.data;
+}
 
- {
-   const res = await axiosInstance.post("/register", {
-     email,
-     password,
-     name,
-   });
+export async function login({ email, password }) {
+  const res = await axiosInstance.post("/login", { email, password });
+  return res.data;
+}
 
-   return res.data;
- }
+export async function getMe() {
+  const res = await axiosInstance.get("/me");
+  return res.data;
+}
 
- export async function login({ email, password }) {
-   const res = await axiosInstance.post("/login", { email, password });
-   return res.data;
- }
-
-
- export async function getMe() {
-   const res = await axiosInstance.get("/me");
-   return res.data;
- }
-
-
- export async function getAcessToken() {
-   const res = await axiosInstance.get("/getAccessToken");
-   return res.data;
- }
+export async function getAcessToken() {
+  const res = await axiosInstance.get("/getAccessToken");
+  return res.data;
+}
