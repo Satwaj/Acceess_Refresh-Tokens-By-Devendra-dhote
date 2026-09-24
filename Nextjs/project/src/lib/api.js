@@ -1,6 +1,6 @@
 import axios from "axios";
 
 export let api = axios.create({
-  baseURL: "https://api.team-sync.space",
+  baseURL: "https://api.team-sync.space/api/auth",
   withCredentials: true,
 });

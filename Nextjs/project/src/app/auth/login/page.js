@@ -9,9 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
-// import { useAuth } from "@/context/authContext";
+
 const Page = () => {
-  // let { hydrateUser } = useAuth();
   let router = useRouter();
 
   const [formData, setFormData] = useState({});
@@ -26,8 +25,8 @@ const Page = () => {
     e.preventDefault();
 
     try {
-      let res = await api.post("/api/auth/login", formData);
-      hydrateUser();
+      await api.post("/login", formData);
+      router.push("/layout/home");
     } catch (error) {
       console.log("error in login", error);
     }

@@ -1,12 +1,5 @@
-import React from 'react'
+import "../globals.css";
 
-const layout = ({children}) => {
-  return (
-    <html lang="en" className={`h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
-    </html>
-  );
+export default function AuthLayout({ children }) {
+  return <div className="min-h-screen">{children}</div>;
 }
-
-
-export default layout

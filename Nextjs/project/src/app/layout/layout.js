@@ -1,15 +1,24 @@
-import Navbar from '@/components/Navbar'
-import React from 'react'
+import "../globals.css";
+import { ThemeProvider } from "@/components/themeProvider";
 
-const layout = ({children}) => {
+export const metadata = {
+  title: "MyShop",
+  description: "Your shopping experience",
+};
+
+export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`h-full antialiased`}>
-      <body className="min-h-full flex flex-col">
-        <Navbar/>
-        {children}
+    <html lang="en" suppressHydrationWarning>
+      <body className="min-h-screen">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
       </body>
     </html>
-  )
+  );
 }
-
-export default layout
