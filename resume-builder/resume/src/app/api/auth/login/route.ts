@@ -7,7 +7,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
-    
     await connectDB();
 
     const body: LoginBody = await req.json();
@@ -57,7 +56,7 @@ export async function POST(req: NextRequest) {
     const response = NextResponse.json<ApiResponse>(
       {
         success: true,
-        message: "User registered successfully",
+        message: "User logged in successfully",
         data: {
           user: {
             _id: isExisted._id,
@@ -77,7 +76,7 @@ export async function POST(req: NextRequest) {
 
     return response;
   } catch (error) {
-    console.log("error in register api", error);
+    console.log("error in login api", error);
     return NextResponse.json<ApiResponse>(
       {
         success: false,
