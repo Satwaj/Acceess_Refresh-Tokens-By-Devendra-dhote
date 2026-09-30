@@ -1,82 +1,202 @@
+import mongoose, { Schema } from "mongoose";
 import { IResume } from "@/types/resume.types";
-import mongoose from "mongoose";
 
-const resumeSchema = new mongoose.Schema<IResume>(
+const personalInfoSchema = new Schema(
   {
-    user_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
+    fullname: {
+      type: String,
+      default: "",
+      trim: true,
     },
-    title: {
+
+    email: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    mobile: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    location: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    github: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    linkedIn: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    portfolio: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+  },
+  { _id: false },
+);
+
+const workExperienceSchema = new Schema(
+  {
+    company: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    position: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    startDate: {
       type: String,
       default: "",
     },
+
+    endDate: {
+      type: String,
+      default: "",
+    },
+
+    description: {
+      type: String,
+      default: "",
+    },
+  },
+  { _id: false },
+);
+
+const projectSchema = new Schema(
+  {
+    title: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    description: {
+      type: String,
+      default: "",
+    },
+
+    githubUrl: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    liveUrl: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    techStack: {
+      type: [String],
+      default: [],
+    },
+  },
+  { _id: false },
+);
+
+const educationSchema = new Schema(
+  {
+    institute: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    degree: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    startDate: {
+      type: String,
+      default: "",
+    },
+
+    endDate: {
+      type: String,
+      default: "",
+    },
+  },
+  { _id: false },
+);
+
+const resumeSchema = new Schema<IResume>(
+  {
+    user_id: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+
+    title: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
     summary: {
       type: String,
       default: "",
     },
+
     personalInfo: {
-      type: {
-        fullname: String,
-        email: String,
-        mobile: String,
-        location: String,
-        github: String,
-        linkedIn: String,
-        portfolio: String,
-      },
-      default: {},
+      type: personalInfoSchema,
+      default: () => ({}),
     },
-    education: {
-      type: [
-        {
-          institute: String,
-          degree: String,
-          startDate: String,
-          endDate: String,
-        },
-      ],
-      default: [],
-    },
+
     workExperience: {
-      type: [
-        {
-          company: String,
-          position: String,
-          startDate: String,
-          endDate: String,
-          description: String,
-        },
-      ],
+      type: [workExperienceSchema],
       default: [],
     },
+
     projects: {
-      type: [
-        {
-          title: String,
-          description: String,
-          techStack: [String],
-          githubUrl: String,
-          liveUrl: String,
-        },
-      ],
+      type: [projectSchema],
       default: [],
     },
+
     skills: {
       type: [String],
       default: [],
     },
+
+    education: {
+      type: [educationSchema],
+      default: [],
+    },
+
     certifications: {
       type: [String],
       default: [],
     },
   },
+
   {
     timestamps: true,
   },
 );
 
 const ResumeModel =
-  mongoose.models.Resume || mongoose.model("Resume", resumeSchema);
-export default ResumeModel
+  mongoose.models.Resume || mongoose.model<IResume>("Resume", resumeSchema);
+
+export default ResumeModel;

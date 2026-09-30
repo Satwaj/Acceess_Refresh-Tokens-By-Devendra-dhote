@@ -1,63 +1,60 @@
 import { Types } from "mongoose";
 
 export interface IPersonalInfo {
-    fullname: string;
-    email: string;
-    mobile: string;
-    location: string;
-    github: string;
-    linkedIn: string;
-    portfolio: string;
+  fullname: string;
+  email: string;
+  mobile: string;
+  location: string;
+  github: string;
+  linkedIn: string;
+  portfolio: string;
 }
 
 export interface IWorkExperience {
-    company: string;
-    position: string;
-    startDate: string;
-    endDate: string;
-    description: string
+  company: string;
+  position: string;
+  startDate: string;
+  endDate: string;
+  description: string;
 }
 
-export interface IProjects {
-    title: string;
-    description: string;
-    githubUrl: string;
-    liveUrl: string;
-    techStack: string[];
+export interface IProject {
+  title: string;
+  description: string;
+  githubUrl: string;
+  liveUrl: string;
+  techStack: string[];
 }
 
 export interface IEducation {
-    institute: string;
-    degree: string;
-    startDate: string;
-    endDate: string;
+  institute: string;
+  degree: string;
+  startDate: string;
+  endDate: string;
 }
 
 export interface IResume {
-    _id?: string;
-    user_id: Types.ObjectId;
-    title: string;
-    summary: string;
-    personalInfo: IPersonalInfo;
-    workExperience?: IWorkExperience[];
-    projects: IProjects[];
-    skills: string[];
-    education: IEducation[];
-    certifications?: string[];
-    createdAt?: Date
-    updatedAt?: Date
-}
+  _id?: Types.ObjectId;
 
- export interface IResumeAnalysis {
-     resume_id: Types.ObjectId;
-     atsScore: number;
-     atsIssues: string[];
-     roast: string[];
+  user_id: Types.ObjectId;
 
-  improvements: string[];
+  title: string;
 
-  suggestions: string[];
+  summary: string;
+
+  personalInfo: IPersonalInfo;
+
+  workExperience: IWorkExperience[];
+
+  projects: IProject[];
+
+  skills: string[];
+
+  education: IEducation[];
+
+  certifications: string[];
 
   createdAt?: Date;
+
   updatedAt?: Date;
 }

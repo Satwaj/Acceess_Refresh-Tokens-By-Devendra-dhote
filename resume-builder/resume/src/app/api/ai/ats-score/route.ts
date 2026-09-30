@@ -1,106 +1,258 @@
-import { generateAiContent } from "@/lib/gemini";
-import { GenerateSummaryBody, ImproveContentBody } from "@/types/ai.types";
-import { ApiResponse } from "@/types/api.types";
 import { NextRequest, NextResponse } from "next/server";
+
+import { generateAiContent } from "@/lib/gemini";
+import { parseAiJson } from "@/lib/ai/ai-json";
+import { atsAnalysisPrompt } from "@/lib/ai/prompts";
+
+import ResumeModel from "@/models/Resume.model";
+import ResumeAnalysisModel from "@/models/ResumeAnalysis.model";
+
+import { AtsAiResult, AtsScoreBody, AtsResult } from "@/types/ai.types";
+
+import { ApiResponse } from "@/types/api.types";
+import mongoose from "mongoose";
+
+function calculateAtsScore(analysis: AtsAiResult): number {
+  const categories = analysis.categories;
+
+  return (
+    categories.keywordOptimization.score +
+    categories.professionalSummary.score +
+    categories.workExperience.score +
+    categories.skills.score +
+    categories.projects.score +
+    categories.readability.score +
+    categories.actionLanguage.score
+  );
+}
+
+function validateAtsResult(result: AtsAiResult): void {
+  if (!result || !result.categories) {
+    throw new Error("Invalid ATS response");
+  }
+
+  const categories = result.categories;
+
+  const checks = [
+    ["keywordOptimization", 20],
+    ["professionalSummary", 10],
+    ["workExperience", 20],
+    ["skills", 15],
+    ["projects", 10],
+    ["readability", 10],
+    ["actionLanguage", 15],
+  ] as const;
+
+  for (const [name, maxScore] of checks) {
+    const category = categories[name];
+
+    if (!category) {
+      throw new Error(`Missing ATS category: ${name}`);
+    }
+
+    if (
+      typeof category.score !== "number" ||
+      category.score < 0 ||
+      category.score > maxScore
+    ) {
+      throw new Error(`Invalid score for ${name}`);
+    }
+
+    if (!Array.isArray(category.issues)) {
+      throw new Error(`Invalid issues for ${name}`);
+    }
+  }
+
+  if (
+    !Array.isArray(result.strengths) ||
+    !Array.isArray(result.improvements) ||
+    !Array.isArray(result.recommendations)
+  ) {
+    throw new Error("Invalid ATS arrays");
+  }
+}
+
+function resumeToText(resume: any): string {
+  return `
+Title:
+${resume.title || ""}
+
+Professional Summary:
+${resume.summary || ""}
+
+Personal Information:
+Name: ${resume.personalInfo?.fullname || ""}
+Location: ${resume.personalInfo?.location || ""}
+
+Work Experience:
+${
+  resume.workExperience
+    ?.map(
+      (experience: any) => `
+Company: ${experience.company}
+Position: ${experience.position}
+Start Date: ${experience.startDate}
+End Date: ${experience.endDate}
+Description:
+${experience.description}
+`,
+    )
+    .join("\n") || "None"
+}
+
+Projects:
+${
+  resume.projects
+    ?.map(
+      (project: any) => `
+Project: ${project.title}
+Description:
+${project.description}
+Tech Stack:
+${project.techStack?.join(", ") || ""}
+`,
+    )
+    .join("\n") || "None"
+}
+
+Skills:
+${resume.skills?.join(", ") || "None"}
+
+Education:
+${
+  resume.education
+    ?.map(
+      (education: any) => `
+Institute: ${education.institute}
+Degree: ${education.degree}
+Start Date: ${education.startDate}
+End Date: ${education.endDate}
+`,
+    )
+    .join("\n") || "None"
+}
+
+Certifications:
+${resume.certifications?.join(", ") || "None"}
+`;
+}
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const body: AtsScoreBody = await req.json();
 
-    const { resumeText } = body;
+    const { resumeId, resumeText, targetRole, jobDescription } = body;
 
-    if (!resumeText)
+    if (!resumeId && !resumeText) {
       return NextResponse.json<ApiResponse>(
         {
           success: false,
-          message: "Missing fields",
+          message: "resumeId or resumeText is required",
         },
         { status: 400 },
       );
+    }
 
-    const prompt = `
-      You are an expert ATS (Applicant Tracking System) evaluator, technical recruiter, and resume reviewer.
+    let finalResumeText = resumeText || "";
 
-      Analyze the resume content below and provide an ATS assessment.
-
-      Resume Content:
-      ${resumeText}
-
-      Rules:
-
-      1. Evaluate the resume based on:
-         - ATS keyword optimization
-         - Professional summary quality
-         - Work experience quality
-         - Skills relevance
-         - Project descriptions
-         - Readability and clarity
-         - Action-oriented language
-         - Overall resume effectiveness
-
-      2. Assign an ATS score between 0 and 100.
-
-      3. Provide:
-         - Overall ATS score
-         - Strengths
-         - Areas for improvement
-         - ATS optimization recommendations
-
-      4. Be realistic and objective.
-      5. Do not inflate scores unnecessarily.
-      6. If important sections are missing, deduct points accordingly.
-      7. Recommendations should be actionable and ATS-focused.
-      8. Return ONLY valid JSON.
-      9. Do not include markdown, code blocks, explanations, or additional text.
-
-      Required JSON Format:
-
-      {
-        "atsScore": 85,
-        "summary": "Brief overall assessment of the resume.",
-        "strengths": [
-          "Strong technical keyword coverage",
-          "Well-structured experience section",
-          "Relevant project descriptions"
-        ],
-        "improvements": [
-          "Add more measurable achievements",
-          "Include additional industry-specific keywords",
-          "Strengthen professional summary"
-        ],
-        "recommendations": [
-          "Quantify accomplishments with metrics where possible",
-          "Align keywords more closely with target job descriptions",
-          "Expand project impact descriptions"
-        ]
+    /*
+      If resumeId is provided, use the saved Resume as
+      the source of truth.
+    */
+    if (resumeId) {
+      if (!mongoose.Types.ObjectId.isValid(resumeId)) {
+        return NextResponse.json<ApiResponse>(
+          {
+            success: false,
+            message: "Invalid resumeId",
+          },
+          { status: 400 },
+        );
       }
 
-      Output:
-      Return ONLY the JSON object.
-      `;
+      const resume = await ResumeModel.findById(resumeId).lean();
 
-    const result = await generateAiContent(prompt);
+      if (!resume) {
+        return NextResponse.json<ApiResponse>(
+          {
+            success: false,
+            message: "Resume not found",
+          },
+          { status: 404 },
+        );
+      }
 
-    const AtsScore = result;
+      finalResumeText = resumeToText(resume);
+    }
 
-    return NextResponse.json<ApiResponse>(
+    if (!finalResumeText.trim()) {
+      return NextResponse.json<ApiResponse>(
+        {
+          success: false,
+          message: "Resume content is empty",
+        },
+        { status: 400 },
+      );
+    }
+
+    const prompt = atsAnalysisPrompt({
+      resumeText: finalResumeText,
+      targetRole,
+      jobDescription,
+    });
+
+    const aiResponse = await generateAiContent(prompt);
+
+    const analysis = parseAiJson<AtsAiResult>(aiResponse);
+
+    validateAtsResult(analysis);
+
+    const atsScore = calculateAtsScore(analysis);
+
+    let analysisId: string | undefined;
+
+    /*
+      Save analysis when a resumeId exists.
+    */
+    if (resumeId) {
+      const savedAnalysis = await ResumeAnalysisModel.create({
+        resume_id: resumeId,
+        targetRole: targetRole || "",
+        jobDescription: jobDescription || "",
+        atsScore,
+        categories: analysis.categories,
+        strengths: analysis.strengths,
+        improvements: analysis.improvements,
+        recommendations: analysis.recommendations,
+      });
+
+      analysisId = savedAnalysis._id.toString();
+    }
+
+    const result: AtsResult = {
+      ...analysis,
+      atsScore,
+      analysisId,
+    };
+
+    return NextResponse.json<ApiResponse<AtsResult>>(
       {
         success: true,
-        message: "AtsScore created",
-        data: {
-          AtsScore,
-        },
+        message: "ATS analysis created successfully",
+        data: result,
       },
-      {
-        status: 201,
-      },
+      { status: 200 },
     );
   } catch (error) {
-    console.log("error in AtsScore api", error);
+    console.error("ATS analysis error:", error);
+
     return NextResponse.json<ApiResponse>(
       {
         success: false,
-        message: "Something went wrong",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Something went wrong while analyzing the resume",
       },
       { status: 500 },
     );
