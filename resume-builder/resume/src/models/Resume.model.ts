@@ -1,5 +1,5 @@
 import { IResume } from "@/types/resume.types";
-import mongoose, { mongo } from "mongoose";
+import mongoose from "mongoose";
 
 const resumeSchema = new mongoose.Schema<IResume>(
   {
@@ -23,6 +23,7 @@ const resumeSchema = new mongoose.Schema<IResume>(
         mobile: String,
         location: String,
         github: String,
+        linkedIn: String,
         portfolio: String,
       },
       default: {},
@@ -78,4 +79,4 @@ const resumeSchema = new mongoose.Schema<IResume>(
 
 const ResumeModel =
   mongoose.models.Resume || mongoose.model("Resume", resumeSchema);
-export default ResumeModel;
+export default ResumeModel

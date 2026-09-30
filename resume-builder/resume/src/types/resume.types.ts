@@ -47,3 +47,17 @@ export interface IResume {
     createdAt?: Date
     updatedAt?: Date
 }
+
+ export interface IResumeAnalysis {
+     resume_id: Types.ObjectId;
+     atsScore: number;
+     atsIssues: string[];
+     roast: string[];
+
+  improvements: string[];
+
+  suggestions: string[];
+
+  createdAt?: Date;
+  updatedAt?: Date;
+}
